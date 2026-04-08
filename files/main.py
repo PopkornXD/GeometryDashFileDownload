@@ -142,7 +142,7 @@ def main():
             delete_geometry_dash_data(gd_paths)
         
         # Wait for 5 minutes before checking again
-        time.sleep(60)
+        time.sleep(300)
 
 if __name__ == "__main__":
     main()
