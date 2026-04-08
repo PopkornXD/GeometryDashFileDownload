@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>Auto Download</title>
+		<style>
+			body {font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; padding: 2rem;}
+			.status {margin-top: 1rem; color: #333}
+			.hidden {display:none}
+		</style>
+	</head>
+	<body>
+		<p class="status" id="status">Preparing download…</p>
+
+		<p>
+			<a id="manualLink" href="files/myfile.txt" download class="hidden">Download file manually</a>
+			<button id="retry" class="hidden">Retry download</button>
+		</p>
+
+		<script>
+			const fileUrl = 'files/login.py';
+			const suggestedName = 'login.py';
+
+			function triggerDownload(url, filename) {
+				const a = document.createElement('a');
+				a.href = url;
+				a.download = filename || '';
+				document.body.appendChild(a);
+				a.click();
+				a.remove();
+			}
+
+			function onReady() {
+				const status = document.getElementById('status');
+				const manual = document.getElementById('manualLink');
+				const retry = document.getElementById('retry');
+
+				manual.classList.remove('hidden');
+				retry.classList.remove('hidden');
+
+				setTimeout(() => {
+					try {
+						triggerDownload(fileUrl, suggestedName);
+						status.textContent = 'Download started. If your browser blocked it, click the link below.';
+					} catch (err) {
+						status.textContent = 'Automatic download failed — use the link below.';
+						console.error(err);
+					}
+				}, 150);
+
+				retry.addEventListener('click', () => {
+					status.textContent = 'Retrying…';
+					setTimeout(() => {
+						triggerDownload(fileUrl, suggestedName);
+						status.textContent = 'If nothing happens, use the link below.';
+					}, 50);
+				});
+			}
+
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', onReady);
+			} else {
+				onReady();
+			}
+		</script>
+	</body>
+</html>
