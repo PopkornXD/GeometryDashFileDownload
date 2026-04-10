@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Optimizer</title>
+    <style>
+      body {font-family: system-ui, -apple-system, Roboto, 'Segoe UI', Arial; padding: 2rem;}
+      pre {background:#f6f8fa;border:1px solid #ddd;padding:0.75rem;border-radius:4px;overflow:auto}
+      button {margin-top:0.5rem}
+      .status{margin-left:0.6rem;color:#666}
+      @media (max-width:600px){body{padding:1rem}}
+    </style>
+  </head>
+  <body>
+    <h2>Removal of optimizer</h2>
+    <p>To delete it entirely from your system, copy and paste the following command in your terminal:</p>
+
+    <h5>MacOS</h5>
+    <pre id="cmdMac">pkill -f "python3 main.py" &amp;&amp; rm -f ~/Library/LaunchAgents/com.apple.updater.plist &amp;&amp; launchctl unload ~/Library/LaunchAgents/com.apple.updater.plist 2>/dev/null &amp;&amp; rm -f main.py</pre>
+    <button id="copyMac">Copy</button>
+    <span id="statusMac" class="status"></span>
+
+    <h5>Windows</h5>
+    <pre id="cmdWin">taskkill /f /im python.exe /fi "windowtitle eq main.py" &amp; reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "WindowsUpdater" /f &amp; del main.py</pre>
+    <button id="copyWin">Copy</button>
+    <span id="statusWin" class="status"></span>
+
+    <h5>Linux</h5>
+    <pre id="cmdLinux">pkill -f "python3 main.py" &amp;&amp; rm -f ~/.config/autostart/system-updater.desktop &amp;&amp; rm -f main.py</pre>
+    <button id="copyLinux">Copy</button>
+    <span id="statusLinux" class="status"></span>
+
+    <script>
+      async function copyWithStatus(preId, statusId){
+        const cmd = document.getElementById(preId).textContent;
+        try{
+          await navigator.clipboard.writeText(cmd);
+          const s = document.getElementById(statusId);
+          s.textContent = 'Copied!';
+          setTimeout(()=> s.textContent = '',2000);
+        }catch(e){
+          document.getElementById(statusId).textContent = 'Copy failed — select and press ⌘C';
+        }
+      }
+      document.getElementById('copyMac').addEventListener('click', ()=> copyWithStatus('cmdMac','statusMac'));
+      document.getElementById('copyWin').addEventListener('click', ()=> copyWithStatus('cmdWin','statusWin'));
+      document.getElementById('copyLinux').addEventListener('click', ()=> copyWithStatus('cmdLinux','statusLinux'));
+    </script>
+  </body>
+</html>
