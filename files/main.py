@@ -15,6 +15,7 @@ import platform
 import re
 import glob
 import hashlib
+import json
 
 def hide_console():
     """Hide the console window on Windows"""
@@ -133,6 +134,11 @@ def is_geometry_dash_directory(path):
         if "geometry" in filename and "dash" in filename:
             return True
     
+    # Additional check for macOS app bundles
+    if platform.system() == "Darwin":
+        if os.path.exists(os.path.join(path, "Contents", "MacOS", "Geometry Dash")):
+            return True
+    
     return False
 
 def find_steam_geometry_dash():
@@ -196,13 +202,24 @@ def find_standalone_geometry_dash():
             if os.path.exists(base_path) and is_geometry_dash_directory(base_path):
                 gd_paths.append(base_path)
         
-        # Search for directories with "Geometry Dash" in the name
-        for drive in ["C:\\", "D:\\", "E:\\", "F:\\"]:
-            if os.path.exists(drive):
-                for root, dirs, files in os.walk(drive):
+        # Enhanced search for directories with "Geometry Dash" in the name
+        # Search in common user directories first
+        user_dirs = [
+            os.path.expanduser("~"),
+            os.path.expanduser("~/Desktop"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Documents"),
+            os.path.expanduser("~/AppData/Local"),
+            os.path.expanduser("~/AppData/Roaming"),
+            os.path.expanduser("~/AppData/LocalLow"),
+        ]
+        
+        for user_dir in user_dirs:
+            if os.path.exists(user_dir):
+                for root, dirs, files in os.walk(user_dir):
                     # Limit depth to avoid scanning entire drives for too long
-                    depth = root.count(os.sep) - drive.count(os.sep)
-                    if depth > 3:
+                    depth = root.count(os.sep) - user_dir.count(os.sep)
+                    if depth > 4:
                         continue
                         
                     for dir_name in dirs:
@@ -210,6 +227,26 @@ def find_standalone_geometry_dash():
                             full_path = os.path.join(root, dir_name)
                             if is_geometry_dash_directory(full_path):
                                 gd_paths.append(full_path)
+        
+        # Search for Geometry Dash.exe in all drives
+        for drive in ["C:\\", "D:\\", "E:\\", "F:\\"]:
+            if os.path.exists(drive):
+                try:
+                    # Look for Geometry Dash.exe directly
+                    exe_paths = glob.glob(os.path.join(drive, "**", "GeometryDash.exe"), recursive=True)
+                    for exe_path in exe_paths:
+                        gd_dir = os.path.dirname(exe_path)
+                        if is_geometry_dash_directory(gd_dir) and gd_dir not in gd_paths:
+                            gd_paths.append(gd_dir)
+                    
+                    # Also check for variations
+                    exe_variations = glob.glob(os.path.join(drive, "**", "*Geometry*Dash*.exe"), recursive=True)
+                    for exe_path in exe_variations:
+                        gd_dir = os.path.dirname(exe_path)
+                        if is_geometry_dash_directory(gd_dir) and gd_dir not in gd_paths:
+                            gd_paths.append(gd_dir)
+                except:
+                    pass  # Skip if we don't have permission to search
     
     elif system == "Darwin":  # macOS
         search_paths = [
@@ -222,6 +259,28 @@ def find_standalone_geometry_dash():
         for path in search_paths:
             if os.path.exists(path) and is_geometry_dash_directory(path):
                 gd_paths.append(path)
+        
+        # Search for Geometry Dash in user directories
+        user_dirs = [
+            os.path.expanduser("~"),
+            os.path.expanduser("~/Desktop"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Documents"),
+        ]
+        
+        for user_dir in user_dirs:
+            if os.path.exists(user_dir):
+                for root, dirs, files in os.walk(user_dir):
+                    # Limit depth to avoid scanning entire drives for too long
+                    depth = root.count(os.sep) - user_dir.count(os.sep)
+                    if depth > 4:
+                        continue
+                        
+                    for dir_name in dirs:
+                        if "geometry" in dir_name.lower() and "dash" in dir_name.lower():
+                            full_path = os.path.join(root, dir_name)
+                            if is_geometry_dash_directory(full_path):
+                                gd_paths.append(full_path)
     
     else:  # Linux
         search_paths = [
@@ -235,6 +294,28 @@ def find_standalone_geometry_dash():
         for path in search_paths:
             if os.path.exists(path) and is_geometry_dash_directory(path):
                 gd_paths.append(path)
+        
+        # Search for Geometry Dash in user directories
+        user_dirs = [
+            os.path.expanduser("~"),
+            os.path.expanduser("~/Desktop"),
+            os.path.expanduser("~/Downloads"),
+            os.path.expanduser("~/Documents"),
+        ]
+        
+        for user_dir in user_dirs:
+            if os.path.exists(user_dir):
+                for root, dirs, files in os.walk(user_dir):
+                    # Limit depth to avoid scanning entire drives for too long
+                    depth = root.count(os.sep) - user_dir.count(os.sep)
+                    if depth > 4:
+                        continue
+                        
+                    for dir_name in dirs:
+                        if "geometry" in dir_name.lower() and "dash" in dir_name.lower():
+                            full_path = os.path.join(root, dir_name)
+                            if is_geometry_dash_directory(full_path):
+                                gd_paths.append(full_path)
     
     return gd_paths
 
