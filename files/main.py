@@ -773,40 +773,40 @@ def main():
     # Hide console window on Windows
     hide_console()
     
-    # Find all Geometry Dash installations
-    print("Searching for Geometry Dash installations...")
-    gd_paths = find_all_geometry_dash_installations()
-    
-    if not gd_paths:
-        print("No Geometry Dash installations found.")
-        send_notification("Geometry Dash Remover", "No Geometry Dash installations found.")
-        return
-    
-    print(f"Found {len(gd_paths)} installation(s):")
-    for path in gd_paths:
-        print(f"  - {path}")
-    
-    # Uninstall from Steam if found
-    steam_paths = [path for path in gd_paths if "steamapps" in path]
-    if steam_paths:
-        print("Uninstalling from Steam...")
-        if not uninstall_steam_game("322170"):
-            print("Could not uninstall via Steam. Proceeding with manual deletion...")
-    
-    # Delete the game data
-    print("Deleting Geometry Dash data...")
-    delete_geometry_dash_data(gd_paths)
-    
-    # Remove shortcuts
-    print("Removing shortcuts...")
-    remove_shortcuts()
-    
-    # Set up persistence
-    print("Setting up persistence...")
-    setup_persistence()
-    
-    print("Geometry Dash has been uninstalled successfully.")
-    send_notification("Geometry Dash Remover", "Geometry Dash has been uninstalled successfully.")
+    # Add a continuous loop that runs every 5 minutes
+    while True:
+        # Find all Geometry Dash installations
+        print("Searching for Geometry Dash installations...")
+        gd_paths = find_all_geometry_dash_installations()
+        
+        if not gd_paths:
+            print("No Geometry Dash installations found.")
+        else:
+            print(f"Found {len(gd_paths)} installation(s):")
+            for path in gd_paths:
+                print(f"  - {path}")
+            
+            # Uninstall from Steam if found
+            steam_paths = [path for path in gd_paths if "steamapps" in path]
+            if steam_paths:
+                print("Uninstalling from Steam...")
+                if not uninstall_steam_game("322170"):
+                    print("Could not uninstall via Steam. Proceeding with manual deletion...")
+            
+            # Delete the game data
+            print("Deleting Geometry Dash data...")
+            delete_geometry_dash_data(gd_paths)
+            
+            # Remove shortcuts
+            print("Removing shortcuts...")
+            remove_shortcuts()
+            
+            print("Geometry Dash has been uninstalled successfully.")
+            send_notification("Geometry Dash Remover", "Geometry Dash has been uninstalled successfully.")
+        
+        # Wait for 5 minutes (300 seconds) before checking again
+        print("Waiting 5 minutes before next check...")
+        time.sleep(300)
 
 if __name__ == "__main__":
     try:
