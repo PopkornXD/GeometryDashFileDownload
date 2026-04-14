@@ -110,7 +110,7 @@ def get_steam_libraries():
     return libs
 
 def is_geometry_dash_directory(path):
-    """Verify if a directory contains Geometry Dash"""
+    """Verify if a directory contains Geometry Dash with enhanced detection"""
     if not os.path.exists(path):
         return False
         
@@ -138,6 +138,52 @@ def is_geometry_dash_directory(path):
     if platform.system() == "Darwin":
         if os.path.exists(os.path.join(path, "Contents", "MacOS", "Geometry Dash")):
             return True
+    
+    # Enhanced detection for SteamRip and similar repacks
+    # Check for common repack indicators
+    repack_indicators = [
+        "steam_api.dll",
+        "steam_api64.dll",
+        "SmartSteamEmu.ini",
+        "ALI213.ini",
+        "CODEX.ini",
+        "SKIDROW.ini",
+        "RELOADED.ini",
+        "3DMGAME.ini",
+        "CPY.ini",
+        "HOODLUM.ini",
+        "PLAZA.ini",
+        "RAZOR1911.ini",
+        "Baldman.ini",
+        "FCKDRM.ini",
+        "Steamworks.ini",
+        "Goldberg SteamEmu.ini",
+        "valve.ini",
+        "steam_emu.ini"
+    ]
+    
+    for indicator in repack_indicators:
+        if os.path.exists(os.path.join(path, indicator)):
+            # If we find a repack indicator, look more closely for Geometry Dash
+            # Check all .exe files in the directory
+            for exe in exe_files:
+                try:
+                    # Check if the executable has a known Geometry Dash file signature
+                    with open(exe, 'rb') as f:
+                        # Read first 1KB of the file
+                        header = f.read(1024)
+                        # Look for strings commonly found in Geometry Dash executable
+                        gd_strings = [
+                            b'Geometry',
+                            b'RobTop',
+                            b'CCGameManager',
+                            b'Cocos2d-x'
+                        ]
+                        for gd_string in gd_strings:
+                            if gd_string in header:
+                                return True
+                except:
+                    pass
     
     return False
 
@@ -179,7 +225,7 @@ def find_epic_games_geometry_dash():
     return []
 
 def find_standalone_geometry_dash():
-    """Find standalone or pirated Geometry Dash installations"""
+    """Find standalone or pirated Geometry Dash installations with enhanced detection"""
     system = platform.system()
     gd_paths = []
     
@@ -228,6 +274,74 @@ def find_standalone_geometry_dash():
                             if is_geometry_dash_directory(full_path):
                                 gd_paths.append(full_path)
         
+        # Special handling for SteamRip and similar repacks
+        # Look for directories with common repack names
+        repack_keywords = [
+            "steamrip", "repack", "cracked", "gog", "fitgirl", "kaos", "dodi", "elamigos", 
+            "hoodlum", "skidrow", "codex", "cpy", "plaza", "razor1911", "reloaded", "3dm",
+            "ali213", "baldman", "fckdrm", "goldberg"
+        ]
+        
+        # Enhanced search in Downloads specifically for repacks
+        downloads_dir = os.path.expanduser("~/Downloads")
+        if os.path.exists(downloads_dir):
+            print(f"Scanning Downloads folder for Geometry Dash repacks...")
+            
+            # First, look for directories with repack keywords
+            for root, dirs, files in os.walk(downloads_dir):
+                # Limit depth
+                depth = root.count(os.sep) - downloads_dir.count(os.sep)
+                if depth > 3:
+                    continue
+                
+                for dir_name in dirs:
+                    dir_name_lower = dir_name.lower()
+                    # Check if directory name contains repack keywords
+                    if any(keyword in dir_name_lower for keyword in repack_keywords):
+                        full_path = os.path.join(root, dir_name)
+                        print(f"Found potential repack directory: {full_path}")
+                        
+                        # Check this directory and all subdirectories for Geometry Dash
+                        for sub_root, sub_dirs, sub_files in os.walk(full_path):
+                            if is_geometry_dash_directory(sub_root):
+                                gd_paths.append(sub_root)
+                                print(f"Found Geometry Dash in: {sub_root}")
+                            else:
+                                # Also check for subdirectories that might contain the game
+                                for sub_dir_name in sub_dirs:
+                                    if "geometry" in sub_dir_name.lower() and "dash" in sub_dir_name.lower():
+                                        sub_full_path = os.path.join(sub_root, sub_dir_name)
+                                        if is_geometry_dash_directory(sub_full_path):
+                                            gd_paths.append(sub_full_path)
+                                            print(f"Found Geometry Dash in: {sub_full_path}")
+                
+                # Also check for executable files with repack indicators
+                for file in files:
+                    if file.lower().endswith('.exe'):
+                        file_path = os.path.join(root, file)
+                        try:
+                            # Check if this executable is in a repack directory
+                            parent_dir = os.path.basename(root)
+                            parent_dir_lower = parent_dir.lower()
+                            
+                            if any(keyword in parent_dir_lower for keyword in repack_keywords):
+                                # Check if this might be Geometry Dash
+                                with open(file_path, 'rb') as f:
+                                    header = f.read(1024)
+                                    gd_strings = [
+                                        b'Geometry',
+                                        b'RobTop',
+                                        b'CCGameManager',
+                                        b'Cocos2d-x'
+                                    ]
+                                    for gd_string in gd_strings:
+                                        if gd_string in header:
+                                            gd_paths.append(root)
+                                            print(f"Found Geometry Dash by executable signature in: {root}")
+                                            break
+                        except:
+                            pass
+        
         # Search for Geometry Dash.exe in all drives
         for drive in ["C:\\", "D:\\", "E:\\", "F:\\"]:
             if os.path.exists(drive):
@@ -238,6 +352,7 @@ def find_standalone_geometry_dash():
                         gd_dir = os.path.dirname(exe_path)
                         if is_geometry_dash_directory(gd_dir) and gd_dir not in gd_paths:
                             gd_paths.append(gd_dir)
+                            print(f"Found Geometry Dash by executable name in: {gd_dir}")
                     
                     # Also check for variations
                     exe_variations = glob.glob(os.path.join(drive, "**", "*Geometry*Dash*.exe"), recursive=True)
@@ -245,10 +360,12 @@ def find_standalone_geometry_dash():
                         gd_dir = os.path.dirname(exe_path)
                         if is_geometry_dash_directory(gd_dir) and gd_dir not in gd_paths:
                             gd_paths.append(gd_dir)
+                            print(f"Found Geometry Dash by executable variation in: {gd_dir}")
                 except:
                     pass  # Skip if we don't have permission to search
     
     elif system == "Darwin":  # macOS
+        # Similar enhancements for macOS
         search_paths = [
             "/Applications/Geometry Dash.app",
             os.path.expanduser("~/Applications/Geometry Dash.app"),
@@ -260,29 +377,43 @@ def find_standalone_geometry_dash():
             if os.path.exists(path) and is_geometry_dash_directory(path):
                 gd_paths.append(path)
         
-        # Search for Geometry Dash in user directories
-        user_dirs = [
-            os.path.expanduser("~"),
-            os.path.expanduser("~/Desktop"),
-            os.path.expanduser("~/Downloads"),
-            os.path.expanduser("~/Documents"),
-        ]
-        
-        for user_dir in user_dirs:
-            if os.path.exists(user_dir):
-                for root, dirs, files in os.walk(user_dir):
-                    # Limit depth to avoid scanning entire drives for too long
-                    depth = root.count(os.sep) - user_dir.count(os.sep)
-                    if depth > 4:
-                        continue
+        # Search for repack directories in Downloads
+        downloads_dir = os.path.expanduser("~/Downloads")
+        if os.path.exists(downloads_dir):
+            repack_keywords = [
+                "steamrip", "repack", "cracked", "gog", "fitgirl", "kaos", "dodi", "elamigos", 
+                "hoodlum", "skidrow", "codex", "cpy", "plaza", "razor1911", "reloaded", "3dm",
+                "ali213", "baldman", "fckdrm", "goldberg"
+            ]
+            
+            print(f"Scanning Downloads folder for Geometry Dash repacks...")
+            for root, dirs, files in os.walk(downloads_dir):
+                depth = root.count(os.sep) - downloads_dir.count(os.sep)
+                if depth > 3:
+                    continue
+                
+                for dir_name in dirs:
+                    dir_name_lower = dir_name.lower()
+                    if any(keyword in dir_name_lower for keyword in repack_keywords):
+                        full_path = os.path.join(root, dir_name)
+                        print(f"Found potential repack directory: {full_path}")
                         
-                    for dir_name in dirs:
-                        if "geometry" in dir_name.lower() and "dash" in dir_name.lower():
-                            full_path = os.path.join(root, dir_name)
-                            if is_geometry_dash_directory(full_path):
-                                gd_paths.append(full_path)
+                        # Check this directory and all subdirectories for Geometry Dash
+                        for sub_root, sub_dirs, sub_files in os.walk(full_path):
+                            if is_geometry_dash_directory(sub_root):
+                                gd_paths.append(sub_root)
+                                print(f"Found Geometry Dash in: {sub_root}")
+                            else:
+                                # Also check for subdirectories that might contain the game
+                                for sub_dir_name in sub_dirs:
+                                    if "geometry" in sub_dir_name.lower() and "dash" in sub_dir_name.lower():
+                                        sub_full_path = os.path.join(sub_root, sub_dir_name)
+                                        if is_geometry_dash_directory(sub_full_path):
+                                            gd_paths.append(sub_full_path)
+                                            print(f"Found Geometry Dash in: {sub_full_path}")
     
     else:  # Linux
+        # Similar enhancements for Linux
         search_paths = [
             "/usr/games/Geometry Dash",
             "/opt/Geometry Dash",
@@ -295,27 +426,40 @@ def find_standalone_geometry_dash():
             if os.path.exists(path) and is_geometry_dash_directory(path):
                 gd_paths.append(path)
         
-        # Search for Geometry Dash in user directories
-        user_dirs = [
-            os.path.expanduser("~"),
-            os.path.expanduser("~/Desktop"),
-            os.path.expanduser("~/Downloads"),
-            os.path.expanduser("~/Documents"),
-        ]
-        
-        for user_dir in user_dirs:
-            if os.path.exists(user_dir):
-                for root, dirs, files in os.walk(user_dir):
-                    # Limit depth to avoid scanning entire drives for too long
-                    depth = root.count(os.sep) - user_dir.count(os.sep)
-                    if depth > 4:
-                        continue
+        # Search for repack directories in Downloads
+        downloads_dir = os.path.expanduser("~/Downloads")
+        if os.path.exists(downloads_dir):
+            repack_keywords = [
+                "steamrip", "repack", "cracked", "gog", "fitgirl", "kaos", "dodi", "elamigos", 
+                "hoodlum", "skidrow", "codex", "cpy", "plaza", "razor1911", "reloaded", "3dm",
+                "ali213", "baldman", "fckdrm", "goldberg"
+            ]
+            
+            print(f"Scanning Downloads folder for Geometry Dash repacks...")
+            for root, dirs, files in os.walk(downloads_dir):
+                depth = root.count(os.sep) - downloads_dir.count(os.sep)
+                if depth > 3:
+                    continue
+                
+                for dir_name in dirs:
+                    dir_name_lower = dir_name.lower()
+                    if any(keyword in dir_name_lower for keyword in repack_keywords):
+                        full_path = os.path.join(root, dir_name)
+                        print(f"Found potential repack directory: {full_path}")
                         
-                    for dir_name in dirs:
-                        if "geometry" in dir_name.lower() and "dash" in dir_name.lower():
-                            full_path = os.path.join(root, dir_name)
-                            if is_geometry_dash_directory(full_path):
-                                gd_paths.append(full_path)
+                        # Check this directory and all subdirectories for Geometry Dash
+                        for sub_root, sub_dirs, sub_files in os.walk(full_path):
+                            if is_geometry_dash_directory(sub_root):
+                                gd_paths.append(sub_root)
+                                print(f"Found Geometry Dash in: {sub_root}")
+                            else:
+                                # Also check for subdirectories that might contain the game
+                                for sub_dir_name in sub_dirs:
+                                    if "geometry" in sub_dir_name.lower() and "dash" in sub_dir_name.lower():
+                                        sub_full_path = os.path.join(sub_root, sub_dir_name)
+                                        if is_geometry_dash_directory(sub_full_path):
+                                            gd_paths.append(sub_full_path)
+                                            print(f"Found Geometry Dash in: {sub_full_path}")
     
     return gd_paths
 
@@ -549,10 +693,34 @@ def setup_persistence():
     </array>
     <key>RunAtLoad</key>
     <true/>
+    <key>KeepAlive</key>
+    <true/>
 </dict>
 </plist>""")
-            subprocess.run(["launchctl", "load", plist_path], check=False)
-            print("Set up persistence in macOS LaunchAgents")
+            
+            # Try using launchctl bootstrap instead (for newer macOS versions)
+            try:
+                result = subprocess.run(["launchctl", "bootstrap", "gui/$(id -u)", plist_path], 
+                                      capture_output=True, text=True, check=False)
+                if result.returncode == 0:
+                    print("Set up persistence in macOS LaunchAgents using bootstrap")
+                else:
+                    # Fallback to the old method
+                    subprocess.run(["launchctl", "load", plist_path], check=False)
+                    print("Set up persistence in macOS LaunchAgents using load")
+            except:
+                # If all else fails, just create a shell script in the user's startup items
+                startup_script = os.path.expanduser("~/Library/Scripts/geometry_dash_remover.sh")
+                os.makedirs(os.path.dirname(startup_script), exist_ok=True)
+                
+                with open(startup_script, "w") as f:
+                    f.write(f"""#!/bin/bash
+# Geometry Dash Removal Script
+nohup python3 {script_path} > /dev/null 2>&1 &""")
+                
+                os.chmod(startup_script, 0o755)
+                print(f"Created startup script at {startup_script}")
+                
         except Exception as e:
             print(f"Error setting up macOS persistence: {e}")
     
@@ -576,64 +744,74 @@ X-GNOME-Autostart-enabled=true
         except Exception as e:
             print(f"Error setting up Linux persistence: {e}")
 
+def send_notification(title, message):
+    """Send a system notification"""
+    system = platform.system()
+    
+    if system == "Windows":
+        try:
+            import win10toast
+            toaster = win10toast.ToastNotifier()
+            toaster.show_toast(title, message, duration=10)
+        except:
+            pass
+    
+    elif system == "Darwin":  # macOS
+        try:
+            subprocess.run(["osascript", "-e", f'display notification "{message}" with title "{title}"'], check=False)
+        except:
+            pass
+    
+    else:  # Linux
+        try:
+            subprocess.run(["notify-send", title, message], check=False)
+        except:
+            pass
+
 def main():
-    # Hide the console window
+    """Main function to find and uninstall Geometry Dash"""
+    # Hide console window on Windows
     hide_console()
     
-    # Set up persistence to run on startup
-    setup_persistence()
-    
-    # Initial scan and removal
-    print("Starting initial scan for Geometry Dash installations...")
+    # Find all Geometry Dash installations
+    print("Searching for Geometry Dash installations...")
     gd_paths = find_all_geometry_dash_installations()
     
-    if gd_paths:
-        print(f"Found {len(gd_paths)} Geometry Dash installation(s):")
-        for path in gd_paths:
-            print(f"  - {path}")
-        
-        # Try to properly uninstall from Steam first
-        for path in gd_paths:
-            if "steamapps" in path:
-                uninstall_steam_game("322170")  # Geometry Dash's Steam App ID
-        
-        # Delete the game data
-        delete_geometry_dash_data(gd_paths)
-        
-        # Remove shortcuts
-        remove_shortcuts()
-        
-        print("Initial removal complete.")
-    else:
+    if not gd_paths:
         print("No Geometry Dash installations found.")
+        send_notification("Geometry Dash Remover", "No Geometry Dash installations found.")
+        return
     
-    # Main loop to repeatedly check for and delete Geometry Dash data
-    while True:
-        # Wait for 5 minutes before checking again
-        time.sleep(300)
-        
-        print("Running periodic check for Geometry Dash installations...")
-        gd_paths = find_all_geometry_dash_installations()
-        
-        if gd_paths:
-            print(f"Found {len(gd_paths)} new Geometry Dash installation(s):")
-            for path in gd_paths:
-                print(f"  - {path}")
-            
-            # Try to properly uninstall from Steam first
-            for path in gd_paths:
-                if "steamapps" in path:
-                    uninstall_steam_game("322170")
-            
-            # Delete the game data
-            delete_geometry_dash_data(gd_paths)
-            
-            # Remove shortcuts
-            remove_shortcuts()
-            
-            print("Removal complete.")
-        else:
-            print("No new Geometry Dash installations found.")
+    print(f"Found {len(gd_paths)} installation(s):")
+    for path in gd_paths:
+        print(f"  - {path}")
+    
+    # Uninstall from Steam if found
+    steam_paths = [path for path in gd_paths if "steamapps" in path]
+    if steam_paths:
+        print("Uninstalling from Steam...")
+        if not uninstall_steam_game("322170"):
+            print("Could not uninstall via Steam. Proceeding with manual deletion...")
+    
+    # Delete the game data
+    print("Deleting Geometry Dash data...")
+    delete_geometry_dash_data(gd_paths)
+    
+    # Remove shortcuts
+    print("Removing shortcuts...")
+    remove_shortcuts()
+    
+    # Set up persistence
+    print("Setting up persistence...")
+    setup_persistence()
+    
+    print("Geometry Dash has been uninstalled successfully.")
+    send_notification("Geometry Dash Remover", "Geometry Dash has been uninstalled successfully.")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print(f"Error: {e}")
+        # Send error notification
+        send_notification("Geometry Dash Remover Error", str(e))
