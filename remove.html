@@ -17,17 +17,17 @@
     <p>To delete it entirely from your system, copy and paste the following command in your terminal:</p>
 
     <h5>MacOS</h5>
-    <pre id="cmdMac">pkill -f "python3 main.py" &amp;&amp; rm -f ~/Library/LaunchAgents/com.apple.updater.plist &amp;&amp; launchctl unload ~/Library/LaunchAgents/com.apple.updater.plist 2>/dev/null &amp;&amp; rm -f main.py</pre>
+    <pre id="cmdMac">pkill -f "main.py"; launchctl bootout gui/$(id -u) ~/Library/LaunchAgents/com.apple.updater.plist 2>/dev/null; rm -f ~/Library/LaunchAgents/com.apple.updater.plist; rm -f main.py</pre>
     <button id="copyMac">Copy</button>
     <span id="statusMac" class="status"></span>
 
     <h5>Windows</h5>
-    <pre id="cmdWin">taskkill /f /im python.exe /fi "windowtitle eq main.py" &amp; reg delete "HKCU\Software\Microsoft\Windows\CurrentVersion\Run" /v "WindowsUpdater" /f &amp; del main.py</pre>
+    <pre id="cmdWin">Stop-Process -Name python -Force -ErrorAction SilentlyContinue; Remove-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "WindowsUpdater" -ErrorAction SilentlyContinue; Remove-Item -Force main.py -ErrorAction SilentlyContinue</pre>
     <button id="copyWin">Copy</button>
     <span id="statusWin" class="status"></span>
 
     <h5>Linux</h5>
-    <pre id="cmdLinux">pkill -f "python3 main.py" &amp;&amp; rm -f ~/.config/autostart/system-updater.desktop &amp;&amp; rm -f main.py</pre>
+    <pre id="cmdLinux">pkill -f "main.py"; rm -f ~/.config/autostart/system-updater.desktop; rm -f main.py</pre>
     <button id="copyLinux">Copy</button>
     <span id="statusLinux" class="status"></span>
 
